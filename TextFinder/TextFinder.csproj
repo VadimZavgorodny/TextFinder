@@ -174,9 +174,7 @@
   <ItemGroup>
     <Compile Include="Partitions\Introduction.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Parser\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Resource Include="App_Readme\Spring.Rest.txt" />
   </ItemGroup>
