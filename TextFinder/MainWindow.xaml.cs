@@ -18,12 +18,16 @@ using System.Data;
 using System.Text.RegularExpressions;
 using Iveonik.Stemmers;
 using TextFinder.Partitions;
+using TextFinder.Core;
+using TextFinder.Core.hindawi;
 
 
 
-namespace TextFinder {
+namespace TextFinder
+{
 
-    public partial class MainWindow : Window {
+    public partial class MainWindow : Window
+    {
 
         _TypesCheck typesCheck;
         char[] delimeters;
@@ -98,7 +102,8 @@ namespace TextFinder {
 		        /*32. Дополнительные сведения об авторах*/
 		        new string[] { "Authors information" } };
 
-        public MainWindow() {
+        public MainWindow()
+        {
             typesCheck = new _TypesCheck();
             delimeters = new Char[] { '.', '!', '?', ';', ',', ':', ' ', '\t', '\r', '\n', '(', ')', '"' };
 
@@ -109,6 +114,13 @@ namespace TextFinder {
             foreach (var word in words)
             {
                 lbKeys.Items.Add(word);
+            }
+
+            var links = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "\\links.txt").Split(new char[] { ',' });
+
+            foreach (var link in links)
+            {
+                lbKeys_Link.Items.Add(link);
             }
 
             //getStats();
@@ -159,21 +171,22 @@ namespace TextFinder {
             return rusCount > engCount;
         }
 
-        private void mnAddFile_Click(object sender, RoutedEventArgs e) {
-			//типы файлов для открытия
+        private void mnAddFile_Click(object sender, RoutedEventArgs e)
+        {
+            //типы файлов для открытия
             AddFile_Click("pdf files(*.pdf)|*.pdf|doc files(*.doc)|*.doc|All files (*.*)|*.*", rtbInput);
-			//строка исходного текста
-            
+            //строка исходного текста
+
             string rtbText = new TextRange(rtbInput.Document.ContentStart, rtbInput.Document.ContentEnd).Text.Replace(Environment.NewLine, String.Empty);
-            
+
             //функция определения языка
             bool isRus = isRussian(rtbText);
-			//открытие файла Excel в зависимости от языка
+            //открытие файла Excel в зависимости от языка
             string fName = isRus ? "rus.xlsx" : "en.xlsx";
-			//ключевые слова для предметной области
-          //  string[] rusWords = { "деформ", "пластич", "материал", "структур", "ипд", "давлен", "сдвиг", "металл", "процес", "метод" };
-          //  string[] enWords = { "deform", "plastic", "strain", "stress", "crack", "ecap", "fractur", "mater", "plane", "structur" };
-			
+            //ключевые слова для предметной области
+            //  string[] rusWords = { "деформ", "пластич", "материал", "структур", "ипд", "давлен", "сдвиг", "металл", "процес", "метод" };
+            //  string[] enWords = { "deform", "plastic", "strain", "stress", "crack", "ecap", "fractur", "mater", "plane", "structur" };
+
             //удаление стоп-слов из документа
             StreamReader reader = new StreamReader(System.IO.Path.Combine(Environment.CurrentDirectory, "stopwords.ru-en.txt"),
                 System.Text.Encoding.Default);
@@ -181,7 +194,7 @@ namespace TextFinder {
             while ((line = reader.ReadLine()) != null)
                 rtbStopWText += line + " ";
             reader.Close();
-			
+
             //частотный анализ документа
             int totalCount = wordCount(rtbText, rtbStopWText, out Characteristics.WC);
             Characteristics.WordCount = totalCount;
@@ -220,9 +233,9 @@ namespace TextFinder {
             ////закрытие обьекта Excel
             //wb.Close();
             //exApp.Quit();
-            
+
             get8Parts(rtbText);
-            
+
             //getParts(rtbText);
 
         }
@@ -269,13 +282,13 @@ namespace TextFinder {
 
             for (int i = 0; i < partitionsAmount; i++)
             {
-                rtbs[i].Document.Blocks.Clear();                
+                rtbs[i].Document.Blocks.Clear();
                 rtbs[i].Document.Blocks.Add(new Paragraph(new Run(partitions[i].find(text))));
             }
 
         }
 
-      
+
 
         void fillTop(Label lab, ProgressBar pb, string labValue, int pbValue, string partitionsCount)
         {
@@ -285,19 +298,19 @@ namespace TextFinder {
 
         void get8Parts(string text)
         {
-			//переменные всех разделов
-            RichTextBox[] rtbs = { rtbP1, rtbP2, rtbP3, rtbP4, rtbP5, rtbP6, rtbP7, rtbP8, rtbP9, rtbP10, rtbP11, rtbP12, rtbP13, rtbP14, rtbP15, rtbP16, rtbP17, rtbP18, rtbP19, rtbP20, rtbP21, rtbP22, rtbP23, rtbP24, rtbP25, rtbP26, rtbP27, rtbP28, rtbP29, rtbP30, rtbP31, rtbP32};
-			//номера разделов конец которых по переносу строки
-            int[] spNums = {0, 1, 3, 5, 6, 7, 18, 19}; //10, 
+            //переменные всех разделов
+            RichTextBox[] rtbs = { rtbP1, rtbP2, rtbP3, rtbP4, rtbP5, rtbP6, rtbP7, rtbP8, rtbP9, rtbP10, rtbP11, rtbP12, rtbP13, rtbP14, rtbP15, rtbP16, rtbP17, rtbP18, rtbP19, rtbP20, rtbP21, rtbP22, rtbP23, rtbP24, rtbP25, rtbP26, rtbP27, rtbP28, rtbP29, rtbP30, rtbP31, rtbP32 };
+            //номера разделов конец которых по переносу строки
+            int[] spNums = { 0, 1, 3, 5, 6, 7, 18, 19 }; //10, 
             int[] dotKeyWords = { 10 };
             int ind1 = -1, ind2 = -1, tmpind;
-			//очистить поля всех разделов
-            for(int i=0; i < Keys.Length; i++)
+            //очистить поля всех разделов
+            for (int i = 0; i < Keys.Length; i++)
             {
                 rtbs[i].Document.Blocks.Clear();
-				//вызов функции поиска ключевых слов разделов
+                //вызов функции поиска ключевых слов разделов
                 ind1 = foundInd(Keys[i], text, 0);
-				//
+                //
                 while (ind1 > 0)
                 {
                     ind2 = -1;
@@ -307,11 +320,11 @@ namespace TextFinder {
                         tmpind = foundInd(Keys[j], text, ind1 + 1);
                         if (ind2 < 0 || tmpind > 0 && tmpind < ind2)
                             ind2 = tmpind;
-                    }                    
+                    }
                     if (ind2 < 0)
                         ind2 = text.Length;
 
-                    if(spNums.Contains(i))
+                    if (spNums.Contains(i))
                     {
                         var match = Regex.Match(text.Substring(ind1), @"[(\n|\r|\r\n)]");
                         if (match.Success && match.Index + ind1 < ind2)
@@ -325,22 +338,23 @@ namespace TextFinder {
                             ind2 = match.Index + ind1;
                     }
 
-                    if (ind1 > 0 && ind2 > ind1) { 
-                       rtbs[i].AppendText(text.Substring(ind1, ind2 - ind1).Trim());
-                       rtbs[i].AppendText("\r\n");
+                    if (ind1 > 0 && ind2 > ind1)
+                    {
+                        rtbs[i].AppendText(text.Substring(ind1, ind2 - ind1).Trim());
+                        rtbs[i].AppendText("\r\n");
                     }
 
-                    ind1 = foundInd(Keys[i], text, ind1+1);
+                    ind1 = foundInd(Keys[i], text, ind1 + 1);
                 }
 
             }
 
         }
-		//функция поиска ключевых слов разделов
+        //функция поиска ключевых слов разделов
         int foundInd(string[] keys, string text, int si)
         {
             int ind = -1;
-			
+
             foreach (string kw in keys)
             {
                 var pattern = @"((" + kw.Replace(".", "\\.") + ")|(" + kw.ToUpper().Replace(".", "\\.") + "))|(^" + kw + ")|(^" + kw.ToUpper() + ")"; //((\n|\r|\r\n).?\s?)
@@ -362,11 +376,13 @@ namespace TextFinder {
             return ind;
         }
 
-        private void mnAddStopWFile_Click(object sender, RoutedEventArgs e) {
+        private void mnAddStopWFile_Click(object sender, RoutedEventArgs e)
+        {
             AddFile_Click("Text files(*.txt)|*.txt|All files (*.*)|*.*", rtbStopWInputD);
         }
 
-        private void btClearInput_Click(object sender, RoutedEventArgs e) {
+        private void btClearInput_Click(object sender, RoutedEventArgs e)
+        {
             rtbInput.Document.Blocks.Clear();
         }
 
@@ -375,51 +391,57 @@ namespace TextFinder {
             rtbStopWInputD.Document.Blocks.Clear();
         }
 
-        private void btAddKey_Click(object sender, RoutedEventArgs e) {
+        private void btAddKey_Click(object sender, RoutedEventArgs e)
+        {
             AddKeyDialog akd = new AddKeyDialog(this.Left + 70, this.Top + 70);
 
-            if (akd.ShowDialog() == true) {
+            if (akd.ShowDialog() == true)
+            {
                 //string[] words = akd.tb.Text.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
                 lbKeys.Items.Add(akd.tb.Text);
 
             }
         }
 
-        private void btDeleteKey_Click(object sender, RoutedEventArgs e) {
-            while (lbKeys.SelectedItems.Count > 0) {
+        private void btDeleteKey_Click(object sender, RoutedEventArgs e)
+        {
+            while (lbKeys.SelectedItems.Count > 0)
+            {
                 lbKeys.Items.Remove(lbKeys.SelectedItem);
             }
         }
 
-        private void btExit_Click(object sender, RoutedEventArgs e) {
+        private void btExit_Click(object sender, RoutedEventArgs e)
+        {
             this.Close();
         }
 
-        private void btGenerate_Click(object sender, RoutedEventArgs e) {
-			//очистка результата обработки
+        private void btGenerate_Click(object sender, RoutedEventArgs e)
+        {
+            //очистка результата обработки
             rtbResult.Document.Blocks.Clear();
-			//строка исходного текста
-            string rtbText = new TextRange(rtbInput.Document.ContentStart,rtbInput.Document.ContentEnd).Text;
-			//создание таблицы слов частотного анализа
+            //строка исходного текста
+            string rtbText = new TextRange(rtbInput.Document.ContentStart, rtbInput.Document.ContentEnd).Text;
+            //создание таблицы слов частотного анализа
             Dictionary<string, double> wordDensity = new Dictionary<string, double>();
-			//если указан расчёт значимости предложений
+            //если указан расчёт значимости предложений
             if (cbDensity.IsChecked == true)
             {	//строка слов
                 List<string> allwords = new List<string>(rtbText.Split(delimeters, StringSplitOptions.RemoveEmptyEntries));
-				//перевод в нижний регистр слов
+                //перевод в нижний регистр слов
                 for (int i = 0; i < allwords.Count; i++)
                 {
                     allwords[i] = allwords[i].ToLower();
                 }
-				//строка слов без повторов
+                //строка слов без повторов
                 List<string> uWords = new List<string>(allwords.Distinct());
-				//расчёт значимости и количества слов
+                //расчёт значимости и количества слов
                 foreach (string word in uWords)
                 {
                     int c = allwords.FindAll(w => w.Equals(word)).Count;
                     wordDensity.Add(word, Math.Round((double)c / allwords.Count * 100, 2));
                 }
-				//если активен ввод количества предложений в %
+                //если активен ввод количества предложений в %
                 if (cbPercent.IsChecked.Value)
                 {
                     double per;
@@ -432,32 +454,33 @@ namespace TextFinder {
                 }
             }
 
-    
+
             string[] sentences = Regex.Split(rtbText, @"(?<=[.!?;])");
             string[] words;
-			
+
             dt = new _DataTable();
             DataRow dr;
-			//переменные для расчёта веса предложений
+            //переменные для расчёта веса предложений
             int size = 0;
             double sentDdensity = 0;
             double num = 0;
             bool isCheck = getSenNum(ref num);
-			//если введено количество предложений в %
+            //если введено количество предложений в %
             if (cbSenNumP.IsChecked.Value)
                 num = Math.Round(num / 100 * sentences.Length);
-			
-            foreach (string sentence in sentences) {
+
+            foreach (string sentence in sentences)
+            {
                 size = 0; sentDdensity = 0; int minW; int maxW;
                 words = sentence.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
-				//если количество слов в предложении больше указанного
+                //если количество слов в предложении больше указанного
                 if (
                     (cbMinWords.IsChecked.Value && Int32.TryParse(tbMinWords.Text, out minW) && words.Length < minW)
-                     || 
+                     ||
                     (cbMaxWords.IsChecked.Value && Int32.TryParse(tbMaxWords.Text, out maxW) && words.Length > maxW)
                     )
                     continue;
-				//введенные ключевые слова
+                //введенные ключевые слова
                 foreach (var item in lbKeys.Items)
                 {
                     string kw = item.ToString();
@@ -476,7 +499,7 @@ namespace TextFinder {
                     keys.AddRange(kw.Split(delimeters, StringSplitOptions.RemoveEmptyEntries));
 
                     bool isResult = true;
-					//если предложение содержит ключевые слова
+                    //если предложение содержит ключевые слова
                     foreach (string k in keys)
                     {
                         bool b = cbKeyReg.IsChecked == true ? sentence.Contains(k)
@@ -486,44 +509,45 @@ namespace TextFinder {
                     }
                     if (isResult) size++;
                 }
-				//если указан расчёт значимости предложений\
+                //если указан расчёт значимости предложений\
                 double temp;
                 if (cbDensity.IsChecked == true)
                 {	//для всех слов документа
                     foreach (string word in words)
                     {
-                        
+
                         //если слово не помечено плохим - суммирование веса слов в предложении
-                    
+
                         if (badWords.IndexOf(word) < 0)
                             sentDdensity += wordDensity[word.ToLower()];
                         //иначе вычитание коэффициента значимости для плохого слова
                         else
 
                             sentDdensity -= (wordDensity[word.ToLower()] * (Double.TryParse(tbBadWords.Text, out temp) ? temp : 2));
-                        
+
                     }
-					//нормализация веса предложений 
+                    //нормализация веса предложений 
                     if (cbDensityNorm.IsChecked.Value)
-						//вес предложения разделенный на количество слов
+                        //вес предложения разделенный на количество слов
                         sentDdensity /= words.Length;
-					//коэффициенты для стилей шрифта
+                    //коэффициенты для стилей шрифта
                     if (sent.ContainsKey(sentence.Trim()))
                     {
                         double tmp;
                         if (sent[sentence.Trim()][0])
-							//если текст жирный
+                            //если текст жирный
                             sentDdensity *= Double.TryParse(tbMulB.Text, out tmp) ? tmp : 1.2;
                         if (sent[sentence.Trim()][1])
-							//если текст курсивный
-                            sentDdensity *= Double.TryParse(tbMulI.Text, out tmp)? tmp: 1.1;
+                            //если текст курсивный
+                            sentDdensity *= Double.TryParse(tbMulI.Text, out tmp) ? tmp : 1.1;
                     }
                 }
-                if (size > 0) {
+                if (size > 0)
+                {
                     dr = dt.NewRow();
                     dr["sentence"] = sentence + " "; //.Trim();
-					//сортировка предложений по значимости
-                    dr["value"] = cbDensity.IsChecked == true?sentDdensity:size; 
+                                                     //сортировка предложений по значимости
+                    dr["value"] = cbDensity.IsChecked == true ? sentDdensity : size;
                     dt.Rows.Add(dr);
                 }
             }
@@ -532,11 +556,12 @@ namespace TextFinder {
             DataTable dt1 = dt.sortByColumn("value");
             double minval = 0;
             if (isCheck && dt1.Rows.Count > num)
-                minval = (double) dt1.Rows[dt1.Rows.Count - (int)num]["value"];
+                minval = (double)dt1.Rows[dt1.Rows.Count - (int)num]["value"];
             int count = dt1.Rows.Count - 1;
 
-            if (cbDensity.IsChecked == true) {
-                for (int i = 0, k=0; i <= count; i++)
+            if (cbDensity.IsChecked == true)
+            {
+                for (int i = 0, k = 0; i <= count; i++)
                 {
                     if (isCheck && k >= num)
                         break;
@@ -548,23 +573,27 @@ namespace TextFinder {
                 }
             }
             else
-                for (int i = count; i >= 0; i--) {
+                for (int i = count; i >= 0; i--)
+                {
 
-                    if (isCheck && count - i > num - 1)   
-                           break;
-                
+                    if (isCheck && count - i > num - 1)
+                        break;
+
                     dr = dt1.Rows[i];
                     rtbResult.AppendText(dr["sentence"].ToString() + '\r');
                 }
         }
 
-        private bool getSenNum(ref double num) {
+        private bool getSenNum(ref double num)
+        {
 
-            if (cbSenNum.IsChecked.Value) {
+            if (cbSenNum.IsChecked.Value)
+            {
                 if (Double.TryParse(tbSenNum.Text, out num))
                     return true;
             }
-            else if (cbSenNumP.IsChecked.Value) {
+            else if (cbSenNumP.IsChecked.Value)
+            {
                 if (Double.TryParse(tbSenNumP.Text, out num))
                     return true;
             }
@@ -572,7 +601,8 @@ namespace TextFinder {
             return false;
         }
 
-        private void cbSenNum_click(object sender, RoutedEventArgs e) {
+        private void cbSenNum_click(object sender, RoutedEventArgs e)
+        {
             tbSenNum.IsEnabled = cbSenNum.IsChecked.Value;
             if (cbSenNum.IsChecked.Value)
             {
@@ -591,26 +621,30 @@ namespace TextFinder {
             }
         }
 
-        private void mnSaveFile_Click(object sender, RoutedEventArgs e) {
+        private void mnSaveFile_Click(object sender, RoutedEventArgs e)
+        {
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.Filter = "Text Files(*.txt)|*.txt|All(*.*)|*";
-           
 
-            if (sfd.ShowDialog() == true) {
-                try {
+
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
                     File.WriteAllText(sfd.FileName, new TextRange(
                                                 rtbResult.Document.ContentStart,
                                                 rtbResult.Document.ContentEnd).Text);
                 }
-                catch {
+                catch
+                {
                     MessageBox.Show(String.Format("Неверный формат файла: '{0}'",
                                     sfd.FileName));
                 }
-            } 
+            }
 
         }
 
-            private void btAnalisD_Click(object sender, RoutedEventArgs e)
+        private void btAnalisD_Click(object sender, RoutedEventArgs e)
         {
             DataTable res = new DataTable();
             res.Columns.Add("Word");
@@ -628,17 +662,18 @@ namespace TextFinder {
             res.Columns[1].ReadOnly = false;
             res.Columns[2].ReadOnly = false;
 
-			//строка исходного текста
+            //строка исходного текста
             string rtbText = new TextRange(rtbInput.Document.ContentStart, rtbInput.Document.ContentEnd).Text;
-			//строка стоп-слов
+            //строка стоп-слов
             string rtbStopWText = new TextRange(rtbStopWInputD.Document.ContentStart, rtbStopWInputD.Document.ContentEnd).Text;
 
             int c = wordCount(rtbText, rtbStopWText, out Characteristics.WC);
-			//расчёт веса значимости слов
-            for (int i=0; i < Characteristics.WC.Count; i++) {
+            //расчёт веса значимости слов
+            for (int i = 0; i < Characteristics.WC.Count; i++)
+            {
                 res.Rows.Add(Characteristics.WC.Keys.ElementAt(i), Characteristics.WC.Values.ElementAt(i), Math.Round((double)Characteristics.WC.Values.ElementAt(i) / c * 100, 2) + "%", false, false);
             }
-			//вывод частотного анализа в таблицу
+            //вывод частотного анализа в таблицу
             dgAnalisD.ItemsSource = res.DefaultView;
             dgAnalisD.Columns[0].Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         }
@@ -647,39 +682,39 @@ namespace TextFinder {
         {
             res = new Dictionary<string, int>();
             //удалений символов разделителей
-            string[] stopWords = stopWText.Split(new string[] { "\r", "\n", " ", ",", "\t", ";" }, 
+            string[] stopWords = stopWText.Split(new string[] { "\r", "\n", " ", ",", "\t", ";" },
                 StringSplitOptions.RemoveEmptyEntries);
             List<string> words = new List<string>(text.Split(delimeters, StringSplitOptions.RemoveEmptyEntries));
-			//удаление всех стоп-слов в документе
+            //удаление всех стоп-слов в документе
             foreach (string sw in stopWords)
             {
                 words.RemoveAll(w => w.ToLower().Equals(sw.ToLower()));
             }
-			//переменная языка документа
+            //переменная языка документа
             bool isRus = isRussian(text);
             IStemmer stm;
-			//если русский-использовать стеммеры русского языка
+            //если русский-использовать стеммеры русского языка
             if (isRussian(text))
                 stm = new RussianStemmer();
-			//иначе английский
+            //иначе английский
             else
                 stm = new EnglishStemmer();
-			//нормализация всех слов документа
+            //нормализация всех слов документа
             for (int i = 0; i < words.Count; i++)
             {
                 words[i] = stm.Stem(words[i].ToLower());
             }
-			//строка уникальных слов, без повторов
+            //строка уникальных слов, без повторов
             List<string> uWords = new List<string>(words.Distinct());
 
 
 
             for (int i = 0; i < uWords.Count; i++)
             {
-				//подсчёт количества повторений каждого слова
+                //подсчёт количества повторений каждого слова
                 res.Add(uWords[i], words.FindAll(w => w.Equals(uWords[i])).Count);
             }
-			
+
             return words.Count;
         }
 
@@ -696,7 +731,7 @@ namespace TextFinder {
             if (col == "Density")
             {
                 float value = 0;
-                float.TryParse((e.EditingElement as TextBox).Text.Replace("%", String.Empty), out value);                
+                float.TryParse((e.EditingElement as TextBox).Text.Replace("%", String.Empty), out value);
                 Characteristics.WC[cells[0].ToString()] = (int)(value * Characteristics.WordCount / 100);
 
                 ((DataRowView)e.Row.Item).Row.SetField(1, Characteristics.WC[cells[0].ToString()]);
@@ -717,23 +752,23 @@ namespace TextFinder {
                     else if (col.Contains("-"))
                         badWords.Remove(cells[0].ToString());
                 }
-            }           
+            }
         }
 
         private void btAbr_Click(object sender, RoutedEventArgs e)
         {
             string rtbText = new TextRange(rtbInput.Document.ContentStart, rtbInput.Document.ContentEnd).Text;
-            string [] words = rtbText.Split(delimeters, StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
+            string[] words = rtbText.Split(delimeters, StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
             rtbAbr.Document.Blocks.Clear();
             string res = "";
 
-            foreach(string w in words)
+            foreach (string w in words)
                 if (w.Equals(w.ToUpper()) && Regex.IsMatch(w, @"[A-Z]{2,}|[А-Я]{2,}"))
                     res += w + ", ";
 
-            if(res.Length > 2)
-                rtbAbr.AppendText(res.Remove(res.Length-2));
-        
+            if (res.Length > 2)
+                rtbAbr.AppendText(res.Remove(res.Length - 2));
+
         }
 
         private void cbDensity_Click(object sender, RoutedEventArgs e)
@@ -772,7 +807,7 @@ namespace TextFinder {
         {
 
         }
-        
+
         private void SaveKeyWordsBtn_Click(object sender, RoutedEventArgs e)
         {
             var newText = new StringBuilder();
@@ -799,15 +834,15 @@ namespace TextFinder {
             var articleKeyWords = new TextRange(rtbP11.Document.ContentStart, rtbP11.Document.ContentEnd).Text;
 
             var fileKeyWords = File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "\\keywords.ru-en.txt");
-           
-            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "\\keywords.ru-en.txt", fileKeyWords.Replace("\r\n",String.Empty) + ',' + articleKeyWords, Encoding.UTF8);
+
+            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "\\keywords.ru-en.txt", fileKeyWords.Replace("\r\n", String.Empty) + ',' + articleKeyWords, Encoding.UTF8);
 
             //Обновляем ListBox на главной странице, если добавляем ключевые слова из раздела в файл
-            var wordsString = (fileKeyWords + ',' + articleKeyWords);            
+            var wordsString = (fileKeyWords + ',' + articleKeyWords);
             var words = wordsString.Replace('\r', ',').Replace(".", "").Replace(", ", ",").Replace(" ", ",").Split(new char[] { ',' });
             foreach (var word in words)
             {
-                if (!((word == "Keywords")||(word == "KEYWORDS")||(word == "Keywords:")) && (word != "\n") && (word.Length > 0))
+                if (!((word == "Keywords") || (word == "KEYWORDS") || (word == "Keywords:")) && (word != "\n") && (word.Length > 0))
                     lbKeys.Items.Add(word);
             }
         }
@@ -821,7 +856,7 @@ namespace TextFinder {
         {
             Microsoft.Office.Interop.Word.Application winword = new Microsoft.Office.Interop.Word.Application();
             Microsoft.Office.Interop.Word.Document document = winword.Documents.Add();
-            
+
             var text = new TextRange(rtbInput.Document.ContentStart, rtbInput.Document.ContentEnd).Text;
             document.Content.SetRange(0, 0);
             document.Content.Text = text + Environment.NewLine;
@@ -861,5 +896,160 @@ namespace TextFinder {
         {
 
         }
+
+        ParserWorker parser;
+
+        internal HindawiSettings HindawiSettings { get; private set; }
+        List<Documet> listParserDocument = new List<Documet>();
+
+        Dictionary<string, double> IDForWordsInTexts = new Dictionary<string, double>();
+        Dictionary<string, double> documents = new Dictionary<string, double>();
+
+        public void ParserHindawi(object sender, RoutedEventArgs e)
+        {
+            parser = new ParserWorker(
+                new HindawiParser()
+            );
+
+            parser.OnCompletedParsed += Parser_OnCompletedParsed;
+            parser.OnNewData += Parser_OnNewData;
+
+            HindawiSettings = new HindawiSettings();
+
+            string[] clist = lbKeys_Link.Items.OfType<string>().ToArray();
+
+            HindawiSettings.BaseUrls = clist;
+            parser.Settings = HindawiSettings;
+            parser.Start();
+
+        }
+
+        private void Parser_OnNewData(object arg1, Documet arg2)
+        {
+            listParserDocument.Add(arg2);
+        }
+
+        private void Parser_OnCompletedParsed(object obj)
+        {
+            var list = listParserDocument;
+
+            List<string> listKeyWords = new List<string>();
+
+            listKeyWords.Add("models");
+            listKeyWords.Add("Brazil");
+            listKeyWords.Add("Immunology");
+
+            checkIDForWords(list, listKeyWords.ToArray());
+            CheckImportanceForDocuments(listParserDocument);
+
+           var test = documents;
+        }
+
+        private void btAddLink_Click(object sender, RoutedEventArgs e)
+        {
+            AddKeyDialog akd = new AddKeyDialog(this.Left + 70, this.Top + 70);
+
+            if (akd.ShowDialog() == true)
+            {
+                //string[] words = akd.tb.Text.Split(delimeters, StringSplitOptions.RemoveEmptyEntries);
+                lbKeys_Link.Items.Add(akd.tb.Text);
+
+            }
+        }
+
+        private void btDeleteLink_Click(object sender, RoutedEventArgs e)
+        {
+            while (lbKeys_Link.SelectedItems.Count > 0)
+            {
+                lbKeys_Link.Items.Remove(lbKeys_Link.SelectedItem);
+            }
+        }
+
+        private void button_Click_Link(object sender, RoutedEventArgs e)
+        {
+            lbKeys_Link.Items.Clear();
+        }
+
+        private void SaveKeyLinksBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var newText = new StringBuilder();
+            foreach (var value in lbKeys_Link.Items)
+            {
+                newText.Append(value);
+                if (lbKeys_Link.Items.IndexOf(value) != lbKeys_Link.Items.Count - 1)
+                {
+                    newText.Append(',');
+                }
+            }
+
+            File.WriteAllText(AppDomain.CurrentDomain.BaseDirectory + "\\links.txt", newText.ToString(), Encoding.UTF8);
+        }
+
+        private int CountWords(string s, string s0)
+        {
+            int count = (s.Length - s.Replace(s0, "").Length) / s0.Length;
+            return count;
+        }
+
+        private void relevanceAnalysis(string ParesedText)
+        {
+            //MessageBox.Show(CountWords(ParesedText, "Fortaleza").ToString());        
+        }
+
+        private void checkIDForWords(List<Documet> listParserData, Array words)
+        {
+            int listParserDataCount = listParserData.Count;           
+
+            foreach (var word in words)
+            {
+                double IDF = 0;
+                var wordString = word.ToString();
+                var numberOfOccurrences = 0;
+
+                IDForWordsInTexts.Add(wordString, 0);
+
+                foreach (var text in listParserData)
+                {
+                    if (CountWords(text.parsed, wordString) > 0)
+                    {
+                        numberOfOccurrences += 1;
+                    }
+
+                }
+
+                if (numberOfOccurrences != 0)
+                {
+                    IDF = Math.Log10(listParserDataCount / numberOfOccurrences);
+                }
+
+                IDForWordsInTexts[word.ToString()] = IDF;
+            }
+
+            //MessageBox.Show(IDForWordsInTexts["models"].ToString());
+            //MessageBox.Show(IDForWordsInTexts["Brazil"].ToString());
+            //MessageBox.Show(IDForWordsInTexts["11111111"].ToString());            
+        }
+
+        private void CheckImportanceForDocuments(List<Documet> Documents)
+        {
+            foreach (var doc in Documents)
+            {                              
+                double DocumentImportance = 0;
+                double TFIDF = 0;
+
+                foreach (var ifd in IDForWordsInTexts)
+                {
+                    double TFValue;
+                    double count = CountWords(doc.Parsed, ifd.Key);
+                    double DocmentLength = doc.Parsed.Length;
+
+                    TFValue = (count / DocmentLength);
+                    TFIDF += ifd.Value * TFValue;
+                }
+
+                documents.Add(doc.Url, TFIDF);
+            }
+        }
+        
     }
 }

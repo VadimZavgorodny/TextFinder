@@ -68,6 +68,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -86,6 +88,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Characteristics.cs" />
+    <Compile Include="Core\Documet.cs" />
+    <Compile Include="Core\hindawi\HindawiParser.cs" />
+    <Compile Include="Core\hindawi\HindawiSettings.cs" />
+    <Compile Include="Core\HtmlLoader.cs" />
+    <Compile Include="Core\IParser.cs" />
+    <Compile Include="Core\IParserSettings.cs" />
+    <Compile Include="Core\ParserWorker.cs" />
     <Compile Include="Partitions\AcademicEditor.cs" />
     <Compile Include="Partitions\AimsObjectives.cs" />
     <Compile Include="Partitions\AnalyticalResult.cs" />
@@ -174,7 +183,9 @@
   <ItemGroup>
     <Compile Include="Partitions\Introduction.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="App_Readme\Spring.Rest.txt" />
   </ItemGroup>
